@@ -5,16 +5,11 @@ Copyright (c) 2014, Steve Witham <switham_github@mac-guyver.com>.
 All rights reserved. This software is available under a BSD license;
 see https://github.com/py-pdf/pypdf/blob/main/LICENSE
 """
-
 import re
 from typing import Any, List, Tuple, Union
-
 from .errors import ParseError
-
-_INT_RE = r"(0|-?[1-9]\d*)"  # A decimal int, don't allow "-0".
-PAGE_RANGE_RE = f"^({_INT_RE}|({_INT_RE}?(:{_INT_RE}?(:{_INT_RE}?)?)))$"
-# groups:         12     34     5 6     7 8
-
+_INT_RE = '(0|-?[1-9]\\d*)'
+PAGE_RANGE_RE = f'^({_INT_RE}|({_INT_RE}?(:{_INT_RE}?(:{_INT_RE}?)?)))$'
 
 class PageRange:
     """
@@ -33,7 +28,7 @@ class PageRange:
       -  indices(n) is like slice.indices(n).
     """
 
-    def __init__(self, arg: Union[slice, "PageRange", str]) -> None:
+    def __init__(self, arg: Union[slice, 'PageRange', str]) -> None:
         """
         Initialize with either a slice -- giving the equivalent page range,
         or a PageRange object -- making a copy,
@@ -60,16 +55,13 @@ class PageRange:
         if isinstance(arg, slice):
             self._slice = arg
             return
-
         if isinstance(arg, PageRange):
             self._slice = arg.to_slice()
             return
-
         m = isinstance(arg, str) and re.match(PAGE_RANGE_RE, arg)
         if not m:
             raise ParseError(arg)
         elif m.group(2):
-            # Special case: just an int means a range of one page.
             start = int(m.group(2))
             stop = start + 1 if start != -1 else None
             self._slice = slice(start, stop)
@@ -87,13 +79,11 @@ class PageRange:
         Returns:
             True, if the ``input`` is a valid PageRange.
         """
-        return isinstance(input, (slice, PageRange)) or (
-            isinstance(input, str) and bool(re.match(PAGE_RANGE_RE, input))
-        )
+        pass
 
     def to_slice(self) -> slice:
         """Return the slice equivalent of this page range."""
-        return self._slice
+        pass
 
     def __str__(self) -> str:
         """A string like "1:2:3"."""
@@ -102,15 +92,14 @@ class PageRange:
         if s.step is None:
             if s.start is not None and s.stop == s.start + 1:
                 return str(s.start)
-
-            indices = s.start, s.stop
+            indices = (s.start, s.stop)
         else:
-            indices = s.start, s.stop, s.step
-        return ":".join("" if i is None else str(i) for i in indices)
+            indices = (s.start, s.stop, s.step)
+        return ':'.join(('' if i is None else str(i) for i in indices))
 
     def __repr__(self) -> str:
         """A string like "PageRange('1:2:3')"."""
-        return "PageRange(" + repr(str(self)) + ")"
+        return 'PageRange(' + repr(str(self)) + ')'
 
     def indices(self, n: int) -> Tuple[int, int, int]:
         """
@@ -125,37 +114,28 @@ class PageRange:
         Returns:
             Arguments for range().
         """
-        return self._slice.indices(n)
+        pass
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, PageRange):
             return False
         return self._slice == other._slice
 
-    def __add__(self, other: "PageRange") -> "PageRange":
+    def __add__(self, other: 'PageRange') -> 'PageRange':
         if not isinstance(other, PageRange):
             raise TypeError(f"Can't add PageRange and {type(other)}")
         if self._slice.step is not None or other._slice.step is not None:
             raise ValueError("Can't add PageRange with stride")
-        a = self._slice.start, self._slice.stop
-        b = other._slice.start, other._slice.stop
-
+        a = (self._slice.start, self._slice.stop)
+        b = (other._slice.start, other._slice.stop)
         if a[0] > b[0]:
-            a, b = b, a
-
-        # Now a[0] is the smallest
+            a, b = (b, a)
         if b[0] > a[1]:
-            # There is a gap between a and b.
             raise ValueError("Can't add PageRanges with gap")
         return PageRange(slice(a[0], max(a[1], b[1])))
+PAGE_RANGE_ALL = PageRange(':')
 
-
-PAGE_RANGE_ALL = PageRange(":")  # The range of all pages.
-
-
-def parse_filename_page_ranges(
-    args: List[Union[str, PageRange, None]]
-) -> List[Tuple[str, PageRange]]:
+def parse_filename_page_ranges(args: List[Union[str, PageRange, None]]) -> List[Tuple[str, PageRange]]:
     """
     Given a list of filenames and page ranges, return a list of (filename, page_range) pairs.
 
@@ -167,26 +147,5 @@ def parse_filename_page_ranges(
     Returns:
         A list of (filename, page_range) pairs.
     """
-    pairs: List[Tuple[str, PageRange]] = []
-    pdf_filename = None
-    did_page_range = False
-    for arg in args + [None]:
-        if PageRange.valid(arg):
-            if not pdf_filename:
-                raise ValueError(
-                    "The first argument must be a filename, not a page range."
-                )
-
-            pairs.append((pdf_filename, PageRange(arg)))
-            did_page_range = True
-        else:
-            # New filename or end of list--do all of the previous file?
-            if pdf_filename and not did_page_range:
-                pairs.append((pdf_filename, PAGE_RANGE_ALL))
-
-            pdf_filename = arg
-            did_page_range = False
-    return pairs
-
-
+    pass
 PageRangeSpec = Union[str, PageRange, Tuple[int, int], Tuple[int, int, int], List[int]]
